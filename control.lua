@@ -18,12 +18,12 @@ end
 
 ---@param event ltn.EventData.on_stops_updated
 local function on_stops_updated(event)
-    game.print(('[LSE] [%s] %s'):format('on_stops_updated', serpent.line(event)))
+    This.Lse:resyncKnownStops(event.logistic_train_stops)
 end
 
 ---@param event ltn.EventData.on_dispatcher_updated
 local function on_dispatcher_updated(event)
-    game.print(('[LSE] [%s] %s'):format('on_dispatcher_updated', serpent.line(event)))
+    This.Lse:addNewDeliveries(event.new_deliveries, event.deliveries)
 end
 
 --------------------------------------------------------------------------------
@@ -31,15 +31,18 @@ end
 --------------------------------------------------------------------------------
 
 local function remote_reset()
-    game.print(('[LSE] [%s]'):format('remote_reset'))
+    This.Lse:clearElevators()
 end
 
+---@param elevator LuaEntity
+---@param network_id integer
 local function remote_connect_elevator(elevator, network_id)
-    game.print(('[LSE] [%s] %s %s'):format('on_train_teleport_started', serpent.line(elevator), tostring(network_id)))
+    This.Lse:connectElevator(elevator, network_id)
 end
 
+---@param elevator LuaEntity
 local function remote_disconnect_elevator(elevator)
-    game.print(('[LSE] [%s] %s'):format('on_train_teleport_started', serpent.line(elevator)))
+    This.Lse:disconnectElevator(elevator)
 end
 
 --------------------------------------------------------------------------------
@@ -48,17 +51,14 @@ end
 
 ---@param event EventData.on_object_destroyed
 local function on_object_destroyed(event)
-    game.print(('[LSE] [%s] %s'):format('on_train_teleport_started', serpent.line(event)))
+    local elevator = This.Lse:findElevator(event.useful_id)
+    if not elevator then return end
+
+    This.Lse:destroy(elevator)
 end
 
----@param event EventData.on_runtime_mod_setting_changed
-local function on_runtime_mod_setting_changed(event)
-    game.print(('[LSE] [%s] %s'):format('on_train_teleport_started', serpent.line(event)))
-end
-
----@param event ConfigurationChangedData
-local function on_configuration_changed(event)
-    game.print(('[LSE] [%s] %s'):format('on_train_teleport_started', serpent.line(event)))
+local function on_configuration_changed()
+    This:init()
 end
 
 --------------------------------------------------------------------------------
@@ -75,8 +75,6 @@ local function register_events()
 
     -- entity destroy (can't filter on that)
     Event.register(defines.events.on_object_destroyed, on_object_destroyed)
-
-    Event.register(defines.events.on_runtime_mod_setting_changed, on_runtime_mod_setting_changed)
 end
 
 local function register_apis()
@@ -90,7 +88,8 @@ end
 --------------------------------------------------------------------------------
 
 local function on_init()
-    This.Lse:init()
+    This:init()
+
     register_events()
     register_apis()
 end

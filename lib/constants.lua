@@ -53,7 +53,7 @@ end
 ---@param id string
 ---@return string result
 function Constants:locale(id)
-    return Constants:with_prefix('gui.') .. id
+    return Constants:with_prefix('locale.') .. id
 end
 
 --------------------------------------------------------------------------------

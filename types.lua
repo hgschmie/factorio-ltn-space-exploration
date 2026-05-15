@@ -80,7 +80,7 @@
 ---@field available_trains      table<number, ltn.Train>
 
 ---@class ltn.EventData.on_stops_updated
----@field logistic_train_stops  table<number, ltn.TrainStop> All train stops known to LTN
+---@field logistic_train_stops  table<integer, ltn.TrainStop> All train stops known to LTN
 
 ----------------------------------------------------------------------------------------------------
 --- SE Types
@@ -96,4 +96,13 @@
 --- scripts/lse
 ----------------------------------------------------------------------------------------------------
 
+---@class lse.ElevatorConfig
+---@field enabled boolean
+---@field network_id integer?
+
+---@class lse.Elevator
+---@field config lse.ElevatorConfig
+
 ---@class lse.Storage
+---@field known_stops LuaEntity[]
+---@field elevators lse.Elevator[]
