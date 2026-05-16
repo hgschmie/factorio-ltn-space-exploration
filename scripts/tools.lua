@@ -22,7 +22,7 @@ local settings = {
 ---@param msg_func msg_func
 ---@param force LuaForce?
 function Tools.printmsg(level, msg_func, force)
-    if Framework.settings:runtime_setting('ltn-interface-console-level') < level then return end
+    if tonumber(Framework.settings:runtime_setting('ltn-interface-console-level')) < level then return end
 
     if force and force.valid then
         force.print(msg_func(), settings)
@@ -42,7 +42,7 @@ end
 ---@param msg string
 ---@param log_func log_func?
 function Tools.log(level, name, msg, log_func)
-    if Framework.settings:runtime_setting('ltn-interface-debug-logfile') < level then return end
+    if tonumber(Framework.settings:runtime_setting('ltn-interface-debug-logfile')) < level then return end
     log(('[LSE] (%s) [%d] - %s'):format(name, level, log_func and msg:format(log_func()) or msg))
 end
 
@@ -50,17 +50,11 @@ end
 -- rich text formatting
 -----------------------------------------------------------------------
 
--- returns rich text string for train stops, or nil if entity is invalid
 ---@param entity LuaEntity
 ---@return string?
-function Tools.richTextForStop(entity)
-    if not (entity and entity.valid) then return nil end
-
-    if Framework.settings:runtime_setting('ltn-interface-message-gps') then
-        return string.format('[train-stop=%d] [gps=%s,%s,%s]', entity.unit_number, entity.position['x'], entity.position['y'], entity.surface.name)
-    else
-        return string.format('[train-stop=%d]', entity.unit_number)
-    end
+function Tools.gpsTextForEntity(entity)
+    if not (entity and entity.valid) then return '<unknown>' end
+    return ('[gps=%s,%s,%s]'):format(entity.position['x'], entity.position['y'], entity.surface.name)
 end
 
 ---@param train LuaTrain

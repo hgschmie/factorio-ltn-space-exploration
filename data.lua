@@ -4,6 +4,8 @@
 
 require('lib.init')
 
+require('prototypes.entities')
+
 ------------------------------------------------------------------------
 
 ---@diagnostic disable-next-line: undefined-field

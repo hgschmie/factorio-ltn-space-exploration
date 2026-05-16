@@ -34,14 +34,24 @@ local function remote_reset()
     This.Lse:clearElevators()
 end
 
----@param elevator LuaEntity
+---@param entity LuaEntity
 ---@param network_id integer
-local function remote_connect_elevator(elevator, network_id)
-    This.Lse:connectElevator(elevator, network_id)
+local function remote_connect_elevator(entity, network_id)
+    local elevator = This.Lse:findOrCreateElevator(entity)
+    if not elevator then return end
+
+    elevator.config.network_id = network_id
+    elevator.config.enabled = true
+    This.Lse:connectElevator(elevator)
 end
 
----@param elevator LuaEntity
-local function remote_disconnect_elevator(elevator)
+---@param entity LuaEntity
+local function remote_disconnect_elevator(entity)
+    local elevator = This.Lse:findOrCreateElevator(entity)
+    if not elevator then return end
+
+    elevator.config.network_id = nil
+    elevator.config.enabled = false
     This.Lse:disconnectElevator(elevator)
 end
 
@@ -51,14 +61,34 @@ end
 
 ---@param event EventData.on_object_destroyed
 local function on_object_destroyed(event)
+    if not (event and event.type == defines.target_type.entity) then return end
+
+    -- either a connector or the elevator itself was destroyed.
+    -- disconnect the elevator
     local elevator = This.Lse:findElevator(event.useful_id)
     if not elevator then return end
 
-    This.Lse:destroy(elevator)
+    This.Lse:disconnect(elevator)
 end
 
 local function on_configuration_changed()
     This:init()
+
+    for _, surface in pairs(game.surfaces) do
+        local space_elevators = surface.find_entities_filtered {
+            name = 'se-space-elevator',
+        }
+        for _, space_elevator in pairs(space_elevators) do
+            local elevator = This.Lse:findOrCreateElevator(space_elevator)
+            if elevator and not elevator.state.connected then
+                elevator.config = {
+                    enabled = true,
+                    network_id = -1,
+                }
+
+                This.Lse:connectElevator(elevator) end
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
