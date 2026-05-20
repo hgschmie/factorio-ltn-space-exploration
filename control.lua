@@ -7,13 +7,27 @@ require('lib.init')
 local Event = require('stdlib.event.event')
 local Player = require('stdlib.event.player')
 
+local const = require('lib.constants')
+local tools = require('scripts.tools')
+
 --------------------------------------------------------------------------------
 -- other mods remote API integration
 --------------------------------------------------------------------------------
 
 ---@param event se.EventData.on_train_teleport_started
 local function on_train_teleport_started(event)
-    game.print(('[LSE] [%s] %s'):format('on_train_teleport_started', serpent.line(event)))
+    This.Lse:startElevatorTravel(event.old_train_id_1, event.train)
+end
+
+---@param event se.EventData.on_train_teleport_finished
+local function on_train_teleport_finished(event)
+    This.Lse:endElevatorTravel(event.old_train_id_1, event.train)
+
+    if event.stranded then
+        tools.printmsg(0, function()
+            return { const:locale('train_stranded'), event.stranded.id, tools.gpsTextForEntity(event.teleporter) }
+        end)
+    end
 end
 
 ---@param event ltn.EventData.on_stops_updated
@@ -23,6 +37,7 @@ end
 
 ---@param event ltn.EventData.on_dispatcher_updated
 local function on_dispatcher_updated(event)
+    if #event.new_deliveries == 0 then return end
     This.Lse:addNewDeliveries(event.new_deliveries, event.deliveries)
 end
 
@@ -86,7 +101,8 @@ local function on_configuration_changed()
                     network_id = -1,
                 }
 
-                This.Lse:connectElevator(elevator) end
+                This.Lse:connectElevator(elevator)
+            end
         end
     end
 end
@@ -97,6 +113,7 @@ end
 
 local function register_events()
     Event.register(remote.call('space-exploration', 'get_on_train_teleport_started_event'), on_train_teleport_started)
+    Event.register(remote.call('space-exploration', 'get_on_train_teleport_finished_event'), on_train_teleport_finished)
     Event.register(remote.call('logistic-train-network', 'on_stops_updated'), on_stops_updated)
     Event.register(remote.call('logistic-train-network', 'on_dispatcher_updated'), on_dispatcher_updated)
 

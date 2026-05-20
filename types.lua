@@ -92,6 +92,13 @@
 ---@field old_surface_index integer
 ---@field teleporter        LuaEntity
 
+---@class se.EventData.on_train_teleport_finished
+---@field train             LuaTrain
+---@field old_train_id_1    integer
+---@field stranded          LuaTrain?
+---@field old_surface_index integer
+---@field teleporter        LuaEntity
+
 ---@class se.ZoneType
 ---@field type         string
 ---@field orbit_index  integer?
