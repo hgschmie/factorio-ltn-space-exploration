@@ -67,7 +67,10 @@ Constants.lse_name = Constants:with_prefix(Constants.name)
 -- settings
 --------------------------------------------------------------------------------
 
-Constants.settings_keys = {}
+Constants.settings_keys = {
+    'use_elevator_clearance',
+    'elevator_clearance_name',
+}
 
 Constants.settings_names = {}
 Constants.settings = {}
