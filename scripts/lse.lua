@@ -228,9 +228,243 @@ local function process_delivery(delivery, callback)
     callback(delivery, from_stop, to_stop)
 end
 
+--- @param entity LuaEntity a carriage or a train-stop
+--- @param schedule LuaSchedule
+--- @param insert_index integer
+--- @param surface_connections ltn.SurfaceConnection[]
+--- @param stop_is_destination boolean
+local function add_temp_stops(entity, schedule, insert_index, surface_connections, stop_is_destination)
+    stop_is_destination = stop_is_destination or false
+
+    local found_stop = nil
+    local distance = 2147483647 -- maxint
+
+    for _, connection in pairs(surface_connections) do
+        -- which entity we use is not important, both map to the same ElevatorData structure
+        -- but the entity might have become invalid between the LTN dispatcher's tick and this one
+        if connection.entity1 and connection.entity1.valid then
+            local elevator = This.Lse:findElevator(connection.entity1.unit_number)
+            if elevator then -- the connection might not belong to se-ltn-glue
+                -- check if the ground end matches the entity.
+                ---@type LuaEntity?
+                local stop = elevator.ground.stop
+                if stop and stop.valid and stop.surface == entity.surface then
+                    -- if the ground end matches and the stop is *after* the elevator, then the
+                    -- stop is actually the opposite end
+                    stop = stop_is_destination and elevator.orbit.stop or elevator.ground.stop
+                else
+                    -- check if the orbit end matches.
+                    stop = elevator.orbit.stop
+                    if stop and stop.valid and stop.surface == entity.surface then
+                        -- same thing: if the orbit end matches and the stop is *after* the elevator, then the
+                        -- stop is actually the opposite end
+                        stop = stop_is_destination and elevator.ground.stop or elevator.orbit.stop
+                    else
+                        stop = nil
+                    end
+                end
+
+                if stop then
+                    -- get_distance_squared avoids calculating a sqrt. That's unnecessary when comparing distances.
+                    -- as the ground end and orbit end sit at the same position on different surfaces, it does not
+                    -- matter that for stop_is_destination it actually looks at the wrong end.
+                    local stop_distance = Position.distance_squared(stop.position, entity.position)
+                    if (not found_stop) or (stop_distance < distance) then
+                        found_stop = stop
+                        distance = stop_distance
+                    end
+                else
+                    tools.log(1, 'add_temp_stops', 'both elevator stops of connection [%s, %d] are either invalid or not on the same surface as the target', function()
+                        return connection.entity1.name, connection.entity1.unit_number
+                    end)
+                end
+            else
+                tools.log(1, 'add_temp_stops', 'no elevator data for connection [%s, %d]', function()
+                    return connection.entity1.name, connection.entity1.unit_number
+                end)
+            end
+        else
+            tools.log(1, 'add_temp_stops', 'stale connection entity')
+        end
+    end
+
+    if found_stop then
+        -- No temp stops. This would require keeping the delivery data for use in on_train_teleport_started to know which elevators the delivery can use.
+        -- This is further complicated when elevator surface connections are removed from LTN during the delivery,
+        -- because the connection data is immediately removed in that case, making finding the corresponding elevator stops impossible.
+        if Framework.settings:runtime_setting(const.settings_names.use_elevator_clearance) then
+            schedule.add_record {
+                station = Framework.settings:runtime_setting(const.settings_names.elevator_clearance_name),
+                temporary = true,
+                index = { schedule_index = insert_index },
+            }
+        end
+        schedule.add_record {
+            station = found_stop.backer_name,
+            temporary = true,
+            index = { schedule_index = insert_index },
+        }
+        if schedule.current > insert_index then
+            schedule.go_to_station(insert_index)
+        end
+    else
+        tools.log(1, 'add_temp_stops', 'failed to find a suitable elevator stop to add to the schedule')
+    end
+end
+
+---@param number1 integer
+---@param number2 integer
+---@return string
+local function sort_pair(number1, number2)
+    return (number1 < number2) and (number1 .. '|' .. number2) or (number2 .. '|' .. number1)
+end
+
+---@param train LuaTrain
+---@param current_stop LuaEntity?
+---@param current_schedule_index integer
+---@param current_surface_index integer
+---@param surface_connections ltn.SurfaceConnection[]
+local function add_temp_stop(train, current_stop, current_schedule_index, current_surface_index, surface_connections)
+    local possible_stops = {}
+    for _, surface_connection in pairs(surface_connections) do
+        local elevator = assert(This.Lse:findElevator(surface_connection.entity1.unit_number))
+        local ground_stop = assert((elevator.ground.stop and elevator.ground.stop.valid) and elevator.ground.stop or nil)
+        local orbit_stop = assert((elevator.orbit.stop and elevator.orbit.stop.valid) and elevator.orbit.stop or nil)
+
+        local entity = ground_stop.surface_index == current_surface_index and ground_stop or orbit_stop
+        assert(entity.surface_index == current_surface_index)
+
+        table.insert(possible_stops, entity)
+    end
+
+    local result
+
+    if current_stop then
+        result = game.train_manager.request_train_path {
+            type = 'path',
+            goals = possible_stops,
+            starts = {
+                {
+                    rail = current_stop.connected_rail,
+                    direction = defines.rail_direction.back,
+                },
+                {
+                    rail = current_stop.connected_rail,
+                    direction = defines.rail_direction.front,
+                },
+            },
+        }
+    else
+        result = game.train_manager.request_train_path {
+            type = 'path',
+            goals = possible_stops,
+            train = train,
+        }
+    end
+
+    if result.found_path then
+        local schedule = assert(train.get_schedule())
+
+        if Framework.settings:runtime_setting(const.settings_names.use_elevator_clearance) then
+            schedule.add_record {
+                station = Framework.settings:runtime_setting(const.settings_names.elevator_clearance_name),
+                temporary = true,
+                index = { schedule_index = current_schedule_index },
+            }
+        end
+
+        schedule.add_record {
+            station = possible_stops[result.goal_index].backer_name,
+            temporary = true,
+            index = { schedule_index = current_schedule_index },
+        }
+
+        if schedule.current > current_schedule_index then
+            schedule.go_to_station(current_schedule_index)
+        end
+    else
+        tools.log(1, 'add_temp_stop', 'failed to find a suitable elevator stop to add to the schedule')
+    end
+end
+
+---@param delivery ltn.Delivery
+---@param provider_stop LuaEntity
+---@param requester_stop LuaEntity
+local function add_space_elevator_stops(delivery, provider_stop, requester_stop)
+    local train = delivery.train
+
+    local surface_connections = {}
+
+    for _, surface_connection in pairs(delivery.surface_connections) do
+        local entity_key = sort_pair(surface_connection.entity1.surface_index, surface_connection.entity2.surface_index)
+        surface_connections[entity_key] = surface_connections[entity_key] or {}
+        table.insert(surface_connections[entity_key], surface_connection)
+    end
+
+    -- assumption: The train is about to leave a depot. So the train surface is the depot surface
+    local train_surface_index = assert(train.carriages[1]).surface_index
+    local provider_surface_index = provider_stop.surface_index
+    local requester_surface_index = requester_stop.surface_index
+
+    local provider_schedule_index, _, provider_stop_type = remote.call('logistic-train-network', 'get_next_logistic_stop', train)
+    assert(provider_stop_type == 'provider')
+
+    local requester_schedule_index, _, requester_stop_type = remote.call('logistic-train-network', 'get_next_logistic_stop', train, provider_schedule_index + 1)
+    assert(requester_stop_type == 'requester')
+
+    -- go in reverse order, schedule index does not change.
+
+    -- return from requester to depot
+    if requester_surface_index ~= train_surface_index then
+        local key = sort_pair(requester_surface_index, train_surface_index)
+        if surface_connections[key] then
+            add_temp_stop(train, requester_stop, requester_schedule_index + 1, requester_surface_index, surface_connections[key])
+        end
+    end
+
+    -- transition between provider and requester
+    if provider_surface_index ~= requester_surface_index then
+        local key = sort_pair(provider_surface_index, requester_surface_index)
+        if surface_connections[key] then
+            add_temp_stop(train, provider_stop, provider_schedule_index + 1, provider_surface_index, surface_connections[key])
+        end
+    end
+
+    -- transition between depot and provider
+    if train_surface_index ~= provider_surface_index then
+        local key = sort_pair(train_surface_index, provider_surface_index)
+        if surface_connections[key] then
+            add_temp_stop(train, nil, 2, train_surface_index, surface_connections[key])
+        end
+    end
+end
+
 ------------------------------------------------------------------------
 -- LTN Remote interface
 ------------------------------------------------------------------------
+
+---@param old_train_id integer
+---@param new_train LuaTrain
+function Lse:startElevatorTravel(old_train_id, new_train)
+    remote.call('logistic-train-network', 'reassign_delivery', old_train_id, new_train)
+end
+
+---@param old_train_id integer
+---@param new_train LuaTrain
+function Lse:endElevatorTravel(old_train_id, new_train)
+    local insert_index = remote.call('logistic-train-network', 'get_or_create_next_temp_stop', new_train)
+
+    if insert_index ~= nil then
+        local schedule = new_train.get_schedule()
+        if schedule.current > insert_index then
+            schedule.go_to_station(insert_index)
+        end
+    end
+
+    tools.printmsg(1, function()
+        return { const:locale('train_arrival'), new_train.id, tools.getTrainName(new_train) }
+    end)
+end
 
 ---@param stops table<integer, ltn.TrainStop>
 function Lse:resyncKnownStops(stops)
@@ -248,8 +482,7 @@ end
 ---@param deliveries table<number, ltn.Delivery>
 function Lse:addNewDeliveries(new_deliveries, deliveries)
     for _, train_id in pairs(new_deliveries) do
-        process_delivery(deliveries[train_id], function(delivery, from_stop, to_stop)
-        end)
+        process_delivery(deliveries[train_id], add_space_elevator_stops)
     end
 end
 
