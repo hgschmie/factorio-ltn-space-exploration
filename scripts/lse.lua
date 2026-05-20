@@ -461,7 +461,7 @@ function Lse:endElevatorTravel(old_train_id, new_train)
         end
     end
 
-    tools.printmsg(1, function()
+    tools.printmsg(2, function()
         return { const:locale('train_arrival'), new_train.id, tools.getTrainName(new_train) }
     end)
 end
@@ -529,7 +529,7 @@ function Lse:updateElevator(elevator)
         elevator.state.connected = false
         elevator.state.network_id = nil
 
-        tools.printmsg(1, function()
+        tools.printmsg(2, function()
             return { const:locale('elevator_disconnected'), tools.gpsTextForEntity(elevator.ground.elevator) }
         end, elevator.ground.elevator.force)
     else
@@ -538,7 +538,7 @@ function Lse:updateElevator(elevator)
             elevator.state.connected = true
             elevator.state.network_id = elevator.config.network_id
 
-            tools.printmsg(1, function()
+            tools.printmsg(2, function()
                 local msg = elevator.config.network_id == -1 and const:locale('elevator_connected_all') or const:locale('elevator_connected')
                 return { msg, tools.gpsTextForEntity(elevator.ground.elevator), tools.networkList(elevator.config.network_id) }
             end, elevator.ground.elevator.force)
