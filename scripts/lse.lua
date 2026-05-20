@@ -181,7 +181,7 @@ end
 
 ---@param connector lse.ElevatorEnd
 ---@return integer connector_id
-function Lse:connectElevatorEnd(connector)
+local function connect_elevator_end(connector)
     if (connector.connector and connector.connector.valid) then return connector.connector.unit_number end
 
     connector.connector = assert(connector.elevator.surface.create_entity {
@@ -268,28 +268,49 @@ end
 function Lse:connectElevator(elevator)
     if not elevator.config.enabled or elevator.state.connected then return end
 
-    local ground_id = self:connectElevatorEnd(elevator.ground)
-    local orbit_id = self:connectElevatorEnd(elevator.orbit)
+    local lse_storage = This:storage()
+
+    local ground_id = connect_elevator_end(elevator.ground)
     elevator.ids['ground'] = ground_id
+    lse_storage.elevators[ground_id] = elevator
+
+    local orbit_id = connect_elevator_end(elevator.orbit)
     elevator.ids['orbit'] = orbit_id
+    lse_storage.elevators[orbit_id] = elevator
 
-    remote.call('logistic-train-network', 'connect_surfaces', elevator.ground.connector, elevator.orbit.connector, elevator.config.network_id)
-
-    elevator.state.connected = true
-
-    tools.printmsg(1, function()
-        local msg = elevator.config.network_id == -1 and const:locale('elevator_connected_all') or const:locale('elevator_connected')
-        return { msg, tools.gpsTextForEntity(elevator.ground.elevator) }
-    end, elevator.ground.elevator.force)
+    self:updateElevator(elevator)
 end
 
 ---@param elevator lse.Elevator
 function Lse:disconnectElevator(elevator)
+    if elevator.config.enabled then return end
+
     self:disconnect(elevator)
 
-    tools.printmsg(1, function()
-        return { const:locale('elevator_disconnected'), tools.gpsTextForEntity(elevator.ground.elevator) }
-    end, elevator.ground.elevator.force)
+    self:updateElevator(elevator)
+end
+
+function Lse:updateElevator(elevator)
+    if (not elevator.config.enabled) or (elevator.config.network_id == 0) then
+        remote.call('logistic-train-network', 'disconnect_surfaces', elevator.ground.connector, elevator.orbit.connector, elevator.config.network_id)
+        elevator.state.connected = false
+        elevator.state.network_id = nil
+
+        tools.printmsg(1, function()
+            return { const:locale('elevator_disconnected'), tools.gpsTextForEntity(elevator.ground.elevator) }
+        end, elevator.ground.elevator.force)
+    else
+        if elevator.state.network_id ~= elevator.config.network_id then
+            remote.call('logistic-train-network', 'connect_surfaces', elevator.ground.connector, elevator.orbit.connector, elevator.config.network_id)
+            elevator.state.connected = true
+            elevator.state.network_id = elevator.config.network_id
+
+            tools.printmsg(1, function()
+                local msg = elevator.config.network_id == -1 and const:locale('elevator_connected_all') or const:locale('elevator_connected')
+                return { msg, tools.gpsTextForEntity(elevator.ground.elevator), tools.networkList(elevator.config.network_id) }
+            end, elevator.ground.elevator.force)
+        end
+    end
 end
 
 return Lse

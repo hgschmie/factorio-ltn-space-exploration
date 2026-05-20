@@ -54,7 +54,7 @@ end
 ---@return string?
 function Tools.gpsTextForEntity(entity)
     if not (entity and entity.valid) then return '<unknown>' end
-    return ('[gps=%s,%s,%s]'):format(entity.position['x'], entity.position['y'], entity.surface.name)
+    return ('[gps=%s,%s,%s]'):format(entity.position.x, entity.position.y, entity.surface.name)
 end
 
 ---@param train LuaTrain
@@ -62,10 +62,41 @@ end
 function Tools.richTextForTrain(train, train_name)
     local loco = Tools.getMainLocomotive(train)
     if loco and loco.valid then
-        return string.format('[train=%d] %s', loco.unit_number, train_name or loco.backer_name)
+        return string.format('[train=%d] %s', train.id, train_name or loco.backer_name)
     else
         return string.format('[train=%d] %s', train.id, train_name)
     end
+end
+
+local function print_left(left, idx)
+    if left then
+        if left == idx then
+            return tostring(left) .. ','
+        else
+            return tostring(left) .. '-' .. tostring(idx) .. ', '
+        end
+    else
+        return ''
+    end
+end
+
+---@param network_id integer
+---@return string network_list
+function Tools.networkList(network_id)
+    local result = ''
+    local mask = 1
+    local left = nil
+    for idx = 1, 32 do
+        if bit32.band(network_id, mask) == mask then
+            if not left then left = idx end
+        else
+            result = result .. print_left(left, idx - 1)
+            left = nil
+        end
+        mask = bit32.lshift(mask, 1)
+    end
+    result = result .. print_left(left, 32)
+    return result
 end
 
 -----------------------------------------------------------------------
@@ -82,10 +113,10 @@ end
 
 --- Get the backer_name of the main locomotive in a given train (which is the main train name). -- from flib
 --- @param train LuaTrain
---- @return string? backer_name The backer_name of the primary locomotive or `nil` when no locomotive was found
+--- @return string backer_name The backer_name of the primary locomotive or '' when no locomotive was found
 function Tools.getTrainName(train)
     local loco = Tools.getMainLocomotive(train)
-    return loco and loco.backer_name
+    return loco and loco.backer_name or ''
 end
 
 return Tools

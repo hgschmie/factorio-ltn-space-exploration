@@ -83,7 +83,7 @@ function Gui.getUi(gui)
                                         name = 'connect',
                                         state = false,
                                         enabled = true,
-                                        handler = { [defines.events.on_gui_switch_state_changed] = gui_events.onToggleConnection },
+                                        handler = { [defines.events.on_gui_checked_state_changed] = gui_events.onToggleConnection },
                                     },
                                     {
                                         type = 'empty-widget',
@@ -123,13 +123,30 @@ end
 ---@param event EventData.on_gui_checked_state_changed
 ---@param gui framework.gui
 function Gui.onToggleConnection(event, gui)
+    local elevator = This.Lse:findElevator(gui.entity_id)
+    if not elevator then return false end
+
     local element = event.element
+    elevator.config.enabled = element.state
+
+    if elevator.config.enabled then
+        This.Lse:connectElevator(elevator)
+    else
+        This.Lse:disconnectElevator(elevator)
+    end
 end
 
 ---@param event EventData.on_gui_confirmed
 ---@param gui framework.gui
 function Gui.onConfirmNetworkId(event, gui)
+    local elevator = This.Lse:findElevator(gui.entity_id)
+    if not elevator then return false end
+
     local element = event.element
+    local text = element.text
+    elevator.config.network_id = (#text == 0) and 0 or tonumber(text)
+
+    This.Lse:updateElevator(elevator)
 end
 
 --------------------------------------------------------------------------------
@@ -137,17 +154,32 @@ end
 --------------------------------------------------------------------------------
 
 ---@param gui framework.gui
+---@param elevator lse.Elevator
+local function update_gui(gui, elevator)
+    local connect = assert(gui:findElement('connect'))
+    connect.state = elevator.config.enabled
+
+    local network_id = assert(gui:findElement('network_id'))
+    network_id.text = tostring(elevator.config.network_id or 0)
+    network_id.enabled = connect.state
+end
+
+
+---@param gui framework.gui
 ---@return boolean
 function Gui.guiUpdater(gui)
+    local elevator = This.Lse:findElevator(gui.entity_id)
+    if not elevator then return false end
+
     ---@type lse.GuiContext
     local context = gui.context
 
-    --    local refresh_config = not (context.last_inserter_config and table.compare(context.last_inserter_config, ml_entity.config.inserter_config))
+    local refresh_config = not (context.last_elevator_config and table.compare(context.last_elevator_config, elevator.config))
 
-    -- if refresh_config then
-    --     if This.Lse.spoiling then update_spoilage(gui, ml_entity) end
-    --     context.last_inserter_config = util.copy(ml_entity.config.inserter_config)
-    -- end
+    if refresh_config then
+        update_gui(gui, elevator)
+        context.last_elevator_config = util.copy(elevator.config)
+    end
 
     return true
 end
@@ -161,11 +193,16 @@ local function on_gui_opened(event)
     if event.gui_type ~= defines.gui_type.entity then return end
     if not (event.entity and event.entity.valid) then return end
 
+    local elevator = This.Lse:findElevator(event.entity.unit_number)
+    if not elevator then return end
+
     local player = Player.get(event.player_index)
     if not player then return end
 
     ---@class lse.GuiContext
+    ---@field last_elevator_config lse.ElevatorConfig?
     local gui_state = {
+        last_elevator_config = nil,
     }
 
     Framework.gui_manager:createGui {
@@ -174,17 +211,13 @@ local function on_gui_opened(event)
         parent = player.gui.relative,
         ui_tree_provider = Gui.getUi,
         context = gui_state,
-        --         entity_id = ml_entity.main.unit_number,
+        entity_id = event.entity.unit_number,
     }
-
-    --    game.players[event.player_index].opened = ml_entity.loader
 end
 
 ---@param event EventData.on_gui_closed
 local function on_gui_closed(event)
     if not (event.entity and event.entity.valid) then return end
-
-    -- local ml_entity = This.MiniLoader:getEntity(event.entity.unit_number)
 
     Framework.gui_manager:destroyGui(event.player_index, Gui.AUX_GUI_NAME)
 end
@@ -194,7 +227,7 @@ end
 --------------------------------------------------------------------------------
 
 local function register_events()
-    local se_entity_filter = Matchers:matchEventEntityName({ 'se-space-elevator' })
+    local se_entity_filter = Matchers:matchEventEntityName { 'se-space-elevator' }
 
     -- Gui updates / sync inserters
     Event.register(defines.events.on_gui_opened, on_gui_opened, se_entity_filter)

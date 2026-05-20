@@ -115,6 +115,7 @@
 
 ---@class lse.ElevatorState
 ---@field connected boolean
+---@field network_id integer?
 
 ---@class lse.ElevatorEnd
 ---@field elevator LuaEntity
