@@ -7,7 +7,8 @@ require('lib.init')
 local Event = require('stdlib.event.event')
 local Player = require('stdlib.event.player')
 
-local const = require('lib.constants')
+local Matchers = require('framework.matchers')
+
 local tools = require('scripts.tools')
 
 --------------------------------------------------------------------------------
@@ -15,33 +16,46 @@ local tools = require('scripts.tools')
 --------------------------------------------------------------------------------
 
 local function remote_reset()
-    This.Lse:clearElevators()
+    This.Elevator:clearElevators()
 end
 
 ---@param entity LuaEntity
 ---@param network_id integer
 local function remote_connect_elevator(entity, network_id)
-    local elevator = This.Lse:findOrCreateElevator(entity)
+    if not tools.isValid(entity) then return end
+
+    local elevator = This.Elevator:findElevator(entity.unit_number)
     if not elevator then return end
 
     elevator.config.network_id = network_id
     elevator.config.enabled = true
-    This.Lse:connectElevator(elevator)
+
+    This.Elevator:updateElevatorConnection(elevator)
 end
 
 ---@param entity LuaEntity
 local function remote_disconnect_elevator(entity)
-    local elevator = This.Lse:findOrCreateElevator(entity)
+    if not tools.isValid(entity) then return end
+
+    local elevator = This.Elevator:findElevator(entity.unit_number)
     if not elevator then return end
 
-    elevator.config.network_id = nil
     elevator.config.enabled = false
-    This.Lse:disconnectElevator(elevator)
+
+    This.Elevator:updateElevatorConnection(elevator)
 end
 
 --------------------------------------------------------------------------------
 -- event handling
 --------------------------------------------------------------------------------
+
+---@param event EventData.on_built_entity | EventData.on_robot_built_entity | EventData.on_space_platform_built_entity | EventData.script_raised_revive | EventData.script_raised_built
+local function on_se_created(event)
+    local entity = event and event.entity
+    if not tools.isValid(entity) then return end
+
+    This.Elevator:registerSpaceElevator(entity)
+end
 
 ---@param event EventData.on_object_destroyed
 local function on_object_destroyed(event)
@@ -49,10 +63,9 @@ local function on_object_destroyed(event)
 
     -- either a connector or the elevator itself was destroyed.
     -- disconnect the elevator
-    local elevator = This.Lse:findElevator(event.useful_id)
+    local elevator = This.Elevator:findElevator(event.useful_id)
     if not elevator then return end
-
-    This.Lse:disconnect(elevator)
+    This.Elevator:destroyElevator(elevator)
 end
 
 local function on_configuration_changed()
@@ -62,15 +75,10 @@ local function on_configuration_changed()
         local space_elevators = surface.find_entities_filtered {
             name = 'se-space-elevator',
         }
-        for _, space_elevator in pairs(space_elevators) do
-            local elevator = This.Lse:findOrCreateElevator(space_elevator)
-            if elevator and not elevator.state.connected then
-                elevator.config = {
-                    enabled = true,
-                    network_id = -1,
-                }
 
-                This.Lse:connectElevator(elevator)
+        for _, space_elevator in pairs(space_elevators) do
+            if tools.isValid(space_elevator) then
+                This.Elevator:registerSpaceElevator(space_elevator)
             end
         end
     end
@@ -87,6 +95,8 @@ local function register_events()
 
     -- entity destroy (can't filter on that)
     Event.register(defines.events.on_object_destroyed, on_object_destroyed)
+
+    Event.register(Matchers.CREATION_EVENTS, on_se_created, Matchers:matchEventEntityName('se-space-elevator'))
 end
 
 local function register_apis()

@@ -53,7 +53,7 @@ end
 ---@param entity LuaEntity
 ---@return string?
 function Tools.gpsTextForEntity(entity)
-    if not (entity and entity.valid) then return '<unknown>' end
+    if not Tools.isValid(entity) then return '<unknown>' end
     return ('[gps=%s,%s,%s]'):format(entity.position.x, entity.position.y, entity.surface.name)
 end
 
@@ -61,7 +61,8 @@ end
 ---@param train_name string?
 function Tools.richTextForTrain(train, train_name)
     local loco = Tools.getMainLocomotive(train)
-    if loco and loco.valid then
+    if Tools.isValid(loco) then
+        ---@diagnostic disable-next-line: need-check-nil
         return string.format('[train=%d] %s', train.id, train_name or loco.backer_name)
     else
         return string.format('[train=%d] %s', train.id, train_name)
@@ -100,6 +101,17 @@ function Tools.networkList(network_id)
 end
 
 -----------------------------------------------------------------------
+-- Helpers
+-----------------------------------------------------------------------
+
+---@param entity (LuaEntity|LuaTrain)?
+---@return (LuaEntity|LuaTrain)? entity
+function Tools.isValid(entity)
+    if not (entity and entity.valid) then return nil end
+    return entity
+end
+
+-----------------------------------------------------------------------
 -- Locomotives and Wagons
 -----------------------------------------------------------------------
 
@@ -107,7 +119,7 @@ end
 --- @param train LuaTrain
 --- @return LuaEntity? locomotive The primary locomotive entity or `nil` when no locomotive was found
 function Tools.getMainLocomotive(train)
-    if not (train and train.valid) then return end
+    if not Tools.isValid(train) then return end
     return train.locomotives.front_movers and train.locomotives.front_movers[1] or train.locomotives.back_movers[1]
 end
 

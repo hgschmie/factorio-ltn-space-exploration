@@ -99,36 +99,50 @@
 ---@field old_surface_index integer
 ---@field teleporter        LuaEntity
 
+---@class se.EventData.on_space_elevator_changed_state
+---@field primary     LuaEntity
+---@field constructed boolean
+---@field powered     boolean
+
 ---@class se.ZoneType
----@field type         string
----@field orbit_index  integer?
----@field parent_index integer?
+---@field type          string
+---@field orbit_index   integer?
+---@field parent_index  integer?
 ---@field surface_index integer
+
+---@class se.ElevatorInfo
+---@field main        LuaEntity
+---@field train_stop  LuaEntity
+---@field opposite    LuaEntity
+---@field constructed boolean
+---@field powered     boolean
 
 ----------------------------------------------------------------------------------------------------
 --- scripts/lse
 ----------------------------------------------------------------------------------------------------
 
 ---@class lse.ElevatorConfig
----@field enabled boolean
+---@field enabled    boolean
 ---@field network_id integer?
 
 ---@class lse.ElevatorState
----@field connected boolean
----@field network_id integer?
+---@field connected   boolean
+---@field network_id  integer?
+---@field powered     boolean?
+---@field constructed boolean?
 
 ---@class lse.ElevatorEnd
----@field elevator LuaEntity
----@field stop LuaEntity
+---@field elevator  LuaEntity
+---@field stop      LuaEntity
 ---@field connector LuaEntity?
 
 ---@class lse.Elevator
----@field ids table<string, integer>
----@field config lse.ElevatorConfig
----@field state lse.ElevatorState
----@field ground lse.ElevatorEnd
----@field orbit lse.ElevatorEnd
+---@field ids     table<string, integer>
+---@field config  lse.ElevatorConfig
+---@field state   lse.ElevatorState
+---@field ground  lse.ElevatorEnd
+---@field orbit   lse.ElevatorEnd
 
 ---@class lse.Storage
 ---@field known_stops LuaEntity[]
----@field elevators lse.Elevator[]
+---@field elevators   lse.Elevator[]
