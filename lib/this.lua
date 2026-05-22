@@ -3,13 +3,20 @@
 ----------------------------------------------------------------------------------------------------
 
 ---@class lse.Mod
+---@field other_mods table<string, string>
 ---@field Lse lse.Lse?
+---@field Elevator lse.SpaceElevator?
 ---@field Gui lse.Gui?
 local This = {
+    other_mods = {
+        LogisticTrainNetwork = 'ltn',
+        ['space-exploration'] = 'se',
+    },
 }
 
 if (script) then
     This.Lse = require('scripts.lse')
+    This.Elevator = require('scripts.elevator')
     This.Gui = require('scripts.gui')
 end
 
