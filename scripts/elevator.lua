@@ -34,7 +34,7 @@ local function create_elevator_end(entity)
     }
 
     local elevator_end = {
-        elevator = entity
+        elevator = entity,
     }
 
     for _, found_entity in pairs(found_entities) do
@@ -157,7 +157,7 @@ function Elevator:registerSpaceElevator(entity)
     if not main_zone then return nil end
 
     ---@type se.ZoneType?
-    local other_zone = remote.call('space-exploration', 'get_zone_from_zone_index', { zone_index = elevator_info.opposite.surface_index })
+    local other_zone = remote.call('space-exploration', 'get_zone_from_surface_index', { surface_index = elevator_info.opposite.surface_index })
     if not other_zone then return nil end
 
     local main_is_orbit = (main_zone.type == 'orbit')
@@ -222,7 +222,6 @@ end
 
 ---@param elevator lse.Elevator
 function Elevator:updateElevatorConnection(elevator)
-
     if (not can_connect(elevator)) or elevator.config.network_id == 0 then
         if not elevator.state.connected then return end
 
