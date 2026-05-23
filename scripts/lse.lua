@@ -207,7 +207,7 @@ function Lse:endElevatorTravel(old_train_id, new_train)
         end
     end
 
-    tools.printmsg(2, function()
+    tools.printmsg(3, function()
         return { const:locale('train_arrival'), new_train.id, tools.getTrainName(new_train) }
     end)
 end

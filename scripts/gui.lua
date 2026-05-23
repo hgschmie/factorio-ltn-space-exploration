@@ -55,11 +55,14 @@ function Gui.getUi(gui)
             { -- Title Bar
                 type = 'flow',
                 style = 'frame_header_flow',
+                drag_target = gui.parent,
                 children = {
                     {
                         type = 'label',
                         style = 'frame_title',
+                        drag_target = gui.parent,
                         caption = { const:locale('logistic_train_network') },
+                        ignored_by_interaction = true,
                     },
                     {
                         type = 'empty-widget',
