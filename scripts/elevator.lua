@@ -189,7 +189,6 @@ function Elevator:registerSpaceElevator(entity)
             network_id = -1,
         },
         state = {
-            connected = false,
             powered = powered,
             constructed = constructed,
         },
@@ -229,13 +228,15 @@ function Elevator:updateElevatorConnection(elevator)
             return { const:locale('elevator_disconnected'), tools.gpsTextForEntity(elevator.ground.connector) }
         end, tools.isValid(elevator.ground.connector) and elevator.ground.connector.force or nil)
 
-        remote.call('logistic-train-network', 'disconnect_surfaces', elevator.ground.connector, elevator.orbit.connector, elevator.config.network_id)
+        remote.call('logistic-train-network', 'disconnect_surfaces', elevator.ground.connector, elevator.orbit.connector)
         elevator.state.network_id = nil
+        elevator.state.connected = false
     else
         if elevator.state.connected and elevator.state.network_id == elevator.config.network_id then return end
 
         remote.call('logistic-train-network', 'connect_surfaces', elevator.ground.connector, elevator.orbit.connector, elevator.config.network_id)
         elevator.state.network_id = elevator.config.network_id
+        elevator.state.connected = true
 
         tools.printmsg(2, function()
             local msg = elevator.config.network_id == -1 and const:locale('elevator_connected_all') or const:locale('elevator_connected')
