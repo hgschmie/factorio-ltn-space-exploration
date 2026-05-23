@@ -21,37 +21,22 @@ local Elevator = {}
 local ENTITY_MAP = {
     [const.lse_name] = 'connector',            -- connector entity
     ['se-space-elevator-train-stop'] = 'stop', -- space elevator stop (used for temp stops)
-    ['se-space-elevator'] = 'elevator',        -- space elevator
 }
 
 local REQUESTED_ENTITIES = table.keys(ENTITY_MAP)
 
----@param zone se.ZoneType
----@return boolean? is_orbit
----@return integer? connected_index
-local function is_orbit(zone)
-    if not zone then return nil, nil end
-
-    if (zone.type == 'planet' or zone.type == 'moon') then
-        return false, zone.orbit_index
-    elseif zone.type == 'orbit' then
-        return true, zone.parent_index
-    end
-    return nil, nil
-end
-
 ---@param entity LuaEntity
----@param surface_index integer?
 ---@return lse.ElevatorEnd?
-local function create_elevator_end(entity, surface_index)
-    local surface = surface_index and game.surfaces[surface_index] or entity.surface
-
-    local found_entities = surface.find_entities_filtered {
+local function create_elevator_end(entity)
+    local found_entities = entity.surface.find_entities_filtered {
         area = Position.new(entity.position):expand_to_area(12),
         name = REQUESTED_ENTITIES,
     }
 
-    local elevator_end = {}
+    local elevator_end = {
+        elevator = entity
+    }
+
     for _, found_entity in pairs(found_entities) do
         elevator_end[ENTITY_MAP[found_entity.name]] = found_entity
     end
@@ -79,26 +64,29 @@ local function create_elevator_end(entity, surface_index)
 end
 
 ---@param elevator lse.Elevator
+---@param key string
+local function clear_elevator_id(elevator, key)
+    local id = elevator.ids[key]
+    if not id then return end
+    elevator.ids[id] = nil
+
+    local lse_storage = This:storage()
+    lse_storage.elevators[id] = nil
+end
+
+---@param elevator lse.Elevator
 ---@param key ('ground'|'orbit')
 local function destroy_connector(elevator, key)
-    local lse_storage = This:storage()
-
     local connector = elevator[key]
     if connector then
         if connector.connector then connector.connector.destroy() end
 
-        if elevator.ids[key] then
-            lse_storage.elevators[elevator.ids[key]] = nil
-            elevator.ids[key] = nil
-        end
+        clear_elevator_id(elevator, key)
+        clear_elevator_id(elevator, 'se_' .. key)
 
-        if not tools.isValid(connector.elevator) then
-            -- clean up elevator if elevator was deleted
-            connector.elevator = nil
-            local se_key = 'se_' .. key
-            lse_storage.elevators[elevator.ids[se_key]] = nil
-            elevator.ids[se_key] = nil
-        end
+        connector.connector = nil
+        connector.elevator = nil
+        connector.stop = nil
     end
 end
 
@@ -165,29 +153,27 @@ function Elevator:registerSpaceElevator(entity)
     end
 
     ---@type se.ZoneType?
-    local this_zone = remote.call('space-exploration', 'get_zone_from_surface_index', { surface_index = entity.surface_index })
-    if not this_zone then return nil end
-
-    local this_is_orbit, other_zone_index = is_orbit(this_zone)
-    if not other_zone_index then return nil end
+    local main_zone = remote.call('space-exploration', 'get_zone_from_surface_index', { surface_index = elevator_info.main.surface_index })
+    if not main_zone then return nil end
 
     ---@type se.ZoneType?
-    local other_zone = remote.call('space-exploration', 'get_zone_from_zone_index', { zone_index = other_zone_index })
+    local other_zone = remote.call('space-exploration', 'get_zone_from_zone_index', { zone_index = elevator_info.opposite.surface_index })
     if not other_zone then return nil end
 
-    local other_is_orbit = is_orbit(other_zone)
+    local main_is_orbit = (main_zone.type == 'orbit')
+    local other_is_orbit = (other_zone.type == 'orbit')
 
     --- One end must be a surface (planet, moon), other must be orbit
-    if this_is_orbit == other_is_orbit then return nil end
+    if main_is_orbit == other_is_orbit then return nil end
 
-    local this_end = create_elevator_end(entity)
-    if not this_end then return nil end
+    local main_end = create_elevator_end(elevator_info.main)
+    if not main_end then return nil end
 
-    local other_end = create_elevator_end(entity, other_zone.surface_index)
+    local other_end = create_elevator_end(elevator_info.opposite)
     if not other_end then return nil end
 
-    local ground = this_is_orbit and other_end or this_end
-    local orbit = other_is_orbit and other_end or this_end
+    local ground = main_is_orbit and other_end or main_end
+    local orbit = other_is_orbit and other_end or main_end
 
 
     elevator = {
@@ -204,8 +190,8 @@ function Elevator:registerSpaceElevator(entity)
         },
         state = {
             connected = false,
-            powered = false,
-            constructed = false,
+            powered = powered,
+            constructed = constructed,
         },
         ground = ground,
         orbit = orbit,
@@ -234,28 +220,28 @@ function Elevator:updateElevatorState(elevator, constructed, powered)
     self:updateElevatorConnection(elevator)
 end
 
-
 ---@param elevator lse.Elevator
 function Elevator:updateElevatorConnection(elevator)
-    elevator.state.connected = can_connect(elevator)
 
-    if (not elevator.state.connected) or (elevator.config.network_id == 0) then
-        remote.call('logistic-train-network', 'disconnect_surfaces', elevator.ground.connector, elevator.orbit.connector, elevator.config.network_id)
-        elevator.state.network_id = nil
+    if (not can_connect(elevator)) or elevator.config.network_id == 0 then
+        if not elevator.state.connected then return end
 
         tools.printmsg(2, function()
-            return { const:locale('elevator_disconnected'), tools.gpsTextForEntity(elevator.ground.elevator) }
-        end, elevator.ground.elevator.force)
-    else
-        if elevator.state.network_id ~= elevator.config.network_id then
-            remote.call('logistic-train-network', 'connect_surfaces', elevator.ground.connector, elevator.orbit.connector, elevator.config.network_id)
-            elevator.state.network_id = elevator.config.network_id
+            return { const:locale('elevator_disconnected'), tools.gpsTextForEntity(elevator.ground.connector) }
+        end, tools.isValid(elevator.ground.connector) and elevator.ground.connector.force or nil)
 
-            tools.printmsg(2, function()
-                local msg = elevator.config.network_id == -1 and const:locale('elevator_connected_all') or const:locale('elevator_connected')
-                return { msg, tools.gpsTextForEntity(elevator.ground.elevator), tools.networkList(elevator.config.network_id) }
-            end, elevator.ground.elevator.force)
-        end
+        remote.call('logistic-train-network', 'disconnect_surfaces', elevator.ground.connector, elevator.orbit.connector, elevator.config.network_id)
+        elevator.state.network_id = nil
+    else
+        if elevator.state.connected and elevator.state.network_id == elevator.config.network_id then return end
+
+        remote.call('logistic-train-network', 'connect_surfaces', elevator.ground.connector, elevator.orbit.connector, elevator.config.network_id)
+        elevator.state.network_id = elevator.config.network_id
+
+        tools.printmsg(2, function()
+            local msg = elevator.config.network_id == -1 and const:locale('elevator_connected_all') or const:locale('elevator_connected')
+            return { msg, tools.gpsTextForEntity(elevator.ground.connector), tools.networkList(elevator.config.network_id) }
+        end, tools.isValid(elevator.ground.connector) and elevator.ground.connector.force or nil)
     end
 end
 
