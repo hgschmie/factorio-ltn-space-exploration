@@ -38,6 +38,7 @@ function Gui.getUi(gui)
     local elevator = This.Elevator:findElevator(gui.entity_id)
     local elevator_enabled = elevator and elevator.config.enabled or false
     local elevator_working = (elevator and elevator.state.constructed and elevator.state.powered) or false
+    local network_id = (elevator and elevator.config.network_id) or 0
 
     return {
         type = 'frame',
@@ -109,9 +110,31 @@ function Gui.getUi(gui)
                                         numeric = true,
                                         allow_negative = true,
                                         lose_focus_on_confirm = true,
-                                        text = elevator and tostring(elevator.config.network_id) or "0",
+                                        text = elevator and tostring(network_id),
                                         handler = { [defines.events.on_gui_confirmed] = gui_events.onConfirmNetworkId },
                                         enabled = elevator_enabled and elevator_working
+                                    },
+                                },
+                            },
+                            {
+                                type = 'flow',
+                                direction = 'horizontal',
+                                style_mods = {
+                                    vertical_align = 'center',
+                                },
+                                children = {
+                                    {
+                                        type = 'label',
+                                        caption = { const:locale('networks') },
+                                    },
+                                    {
+                                        type = 'label',
+                                        name = 'networks',
+                                        style_mods = {
+                                            horizontally_stretchable = true,
+                                            horizontal_align = 'left',
+                                        },
+                                        caption = tools.networkList(network_id),
                                     },
                                 },
                             },
@@ -166,11 +189,14 @@ local function update_gui(gui, elevator)
     connect.state = elevator.config.enabled
     connect.enabled = (elevator.state.constructed and elevator.state.powered) or false
 
-    local network_id = assert(gui:findElement('network_id'))
-    network_id.text = tostring(elevator.config.network_id or 0)
-    network_id.enabled = connect.state and connect.enabled
-end
+    local network_id_element = assert(gui:findElement('network_id'))
+    local network_id = elevator.config.network_id or 0
+    network_id_element.text = tostring(network_id)
+    network_id_element.enabled = connect.state and connect.enabled
 
+    local networks = assert(gui:findElement('networks'))
+    networks.caption = tools.networkList(network_id)
+end
 
 ---@param gui framework.gui
 ---@return boolean
