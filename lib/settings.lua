@@ -26,10 +26,6 @@ local Settings = {
             key = 'ltn-interface-debug-logfile',
             value = 1
         },
-        ['ltn-interface-message-gps'] = {
-            key = 'ltn-interface-debug-logfile',
-            value = false
-        },
     }
 }
 
