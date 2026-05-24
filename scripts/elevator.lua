@@ -143,12 +143,11 @@ function Elevator:registerSpaceElevator(entity)
         unit_number = entity.unit_number,
     })
 
-    local constructed = elevator_info and elevator_info.constructed or false
-    local powered = elevator_info and elevator_info.powered or false
+    if not elevator_info then return nil end
 
     local elevator = This.Elevator:findElevator(entity.unit_number)
     if elevator then
-        self:updateElevatorState(elevator, constructed, powered)
+        self:updateElevatorState(elevator, elevator_info.constructed, elevator_info.powered)
         return elevator
     end
 
@@ -189,8 +188,9 @@ function Elevator:registerSpaceElevator(entity)
             network_id = -1,
         },
         state = {
-            powered = powered,
-            constructed = constructed,
+            connected = false,
+            powered = elevator_info.powered,
+            constructed = elevator_info.constructed,
         },
         ground = ground,
         orbit = orbit,
