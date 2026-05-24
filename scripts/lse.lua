@@ -35,7 +35,7 @@ local function process_delivery(delivery, callback)
     if not loco or (loco.surface == from_stop.surface and loco.surface == to_stop.surface) then return end
 
     tools.printmsg(3, function()
-        return { const:locale('cross-surface-delivery'), tools.richTextForTrain(delivery.train), #delivery.surface_connections }
+        return { const:locale('cross_surface_delivery'), tools.richTextForTrain(delivery.train), #delivery.surface_connections }
     end, loco.force)
 
     callback(delivery, from_stop, to_stop)
