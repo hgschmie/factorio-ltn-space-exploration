@@ -70,6 +70,7 @@ end
 
 local function on_configuration_changed()
     This:init()
+    This.Elevator:removeStaleElevators()
 
     for _, surface in pairs(game.surfaces) do
         local space_elevators = surface.find_entities_filtered {

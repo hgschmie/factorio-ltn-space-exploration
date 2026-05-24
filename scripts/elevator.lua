@@ -133,6 +133,15 @@ function Elevator:clearElevators()
     end
 end
 
+function Elevator:removeStaleElevators()
+    local lse_storage = This:storage()
+    for _, elevator in pairs(lse_storage.elevators) do
+        if not (elevator and tools.isValid(elevator.ground.elevator) and tools.isValid(elevator.orbit.elevator)) then
+            self:destroyElevator(elevator)
+        end
+    end
+end
+
 ---@param entity LuaEntity
 ---@return lse.Elevator? elevator
 function Elevator:registerSpaceElevator(entity)
