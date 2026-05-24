@@ -68,7 +68,7 @@ end
 local function clear_elevator_id(elevator, key)
     local id = elevator.ids[key]
     if not id then return end
-    elevator.ids[id] = nil
+    elevator.ids[key] = nil
 
     local lse_storage = This:storage()
     lse_storage.elevators[id] = nil
