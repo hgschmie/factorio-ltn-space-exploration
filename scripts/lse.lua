@@ -191,7 +191,7 @@ local function add_space_elevator_stops(delivery, provider_stop, requester_stop)
     if train_surface_index ~= provider_surface_index then
         local key = sort_pair(train_surface_index, provider_surface_index)
         if surface_connections[key] then
-            if not add_temp_stop(train, nil, 2, train_surface_index, surface_connections[key]) then
+            if not add_temp_stop(train, nil, provider_schedule_index, train_surface_index, surface_connections[key]) then
                 tools.printmsg(1, function()
                     return ('Could not add a elevator stop to move from %s to %s'):format(game.surfaces[train_surface_index].name, tools.gpsTextForEntity(provider_stop))
                 end)
