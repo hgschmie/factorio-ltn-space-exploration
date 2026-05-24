@@ -48,23 +48,38 @@ local function sort_pair(number1, number2)
     return (number1 < number2) and (number1 .. '|' .. number2) or (number2 .. '|' .. number1)
 end
 
+---@param surface_connection ltn.SurfaceConnection
+---@param current_surface_index integer
+---@return LuaEntity? stop the elevator stop on the current surface, or nil if unavailable
+local function get_elevator_stop_for_surface(surface_connection, current_surface_index)
+    if not tools.isValid(surface_connection.entity1) then return nil end
+
+    local elevator = This.Elevator:findElevator(surface_connection.entity1.unit_number)
+    if not elevator then return nil end
+
+    local ground_stop = tools.isValid(elevator.ground.stop) and elevator.ground.stop or nil
+    local orbit_stop = tools.isValid(elevator.orbit.stop) and elevator.orbit.stop or nil
+    if not (ground_stop and orbit_stop) then return nil end
+
+    local entity = (ground_stop.surface_index == current_surface_index) and ground_stop or orbit_stop
+    if entity.surface_index ~= current_surface_index then return nil end
+
+    if not (elevator.state.connected and elevator.state.constructed and elevator.state.powered) then return nil end
+
+    return entity
+end
+
 ---@param train LuaTrain
 ---@param current_stop LuaEntity?
 ---@param current_schedule_index integer
 ---@param current_surface_index integer
 ---@param surface_connections ltn.SurfaceConnection[]
----@return boolean true found_stop
+---@return boolean found_stop
 local function add_temp_stop(train, current_stop, current_schedule_index, current_surface_index, surface_connections)
     local possible_stops = {}
     for _, surface_connection in pairs(surface_connections) do
-        local elevator = assert(This.Elevator:findElevator(surface_connection.entity1.unit_number))
-        local ground_stop = assert(tools.isValid(elevator.ground.stop) and elevator.ground.stop or nil)
-        local orbit_stop = assert(tools.isValid(elevator.orbit.stop) and elevator.orbit.stop or nil)
-
-        local entity = ground_stop.surface_index == current_surface_index and ground_stop or orbit_stop
-        assert(entity.surface_index == current_surface_index)
-
-        if elevator.state.connected and elevator.state.constructed and elevator.state.powered then
+        local entity = get_elevator_stop_for_surface(surface_connection, current_surface_index)
+        if entity then
             table.insert(possible_stops, entity)
         end
     end
