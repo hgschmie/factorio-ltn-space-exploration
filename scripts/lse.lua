@@ -156,10 +156,16 @@ local function add_space_elevator_stops(delivery, provider_stop, requester_stop)
     local requester_surface_index = requester_stop.surface_index
 
     local provider_schedule_index, _, provider_stop_type = remote.call('logistic-train-network', 'get_next_logistic_stop', train)
-    assert(provider_stop_type == 'provider')
+    if provider_stop_type ~= 'provider' then
+        tools.log(1, 'add_space_elevator_stops', 'could not find provider stop for train %d', function() return train.id end)
+        return
+    end
 
     local requester_schedule_index, _, requester_stop_type = remote.call('logistic-train-network', 'get_next_logistic_stop', train, provider_schedule_index + 1)
-    assert(requester_stop_type == 'requester')
+    if requester_stop_type ~= 'requester' then
+        tools.log(1, 'add_space_elevator_stops', 'could not find requester stop for train %d', function() return train.id end)
+        return
+    end
 
     -- go in reverse order, schedule index does not change.
 
