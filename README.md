@@ -26,7 +26,8 @@ Sets the name of clearance stations when in use. Clearance stations must exist o
 
 ## Known problems
 
-When constructing a space elevator, it should be added automatically to LTN. However, due to [a bug in Space Exploration](https://github.com/EarendelDevelopers/factorio-mods/issues/393), not all orientations of a space elevator are added automatically. If the Space Elevator GUI does not show the LTN addon at the top of the UI, you need to save and restore the game.
+When constructing a space elevator, it should be added automatically to LTN at construction time. However, due to [a bug in Space Exploration](https://github.com/EarendelDevelopers/factorio-mods/issues/393), not all orientations of a space elevator are added automatically.
+If the Space Elevator GUI does not show the LTN addon at the top of the UI before construction has finished, it will be added when construction of the Space Elevator is complete.
 
 ## Legal
 
