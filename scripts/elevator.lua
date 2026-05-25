@@ -28,6 +28,8 @@ local REQUESTED_ENTITIES = table.keys(ENTITY_MAP)
 ---@param entity LuaEntity
 ---@return lse.ElevatorEnd?
 local function create_elevator_end(entity)
+    if not tools.isValid(entity) then return nil end
+
     local found_entities = entity.surface.find_entities_filtered {
         area = Position.new(entity.position):expand_to_area(12),
         name = REQUESTED_ENTITIES,
@@ -38,10 +40,9 @@ local function create_elevator_end(entity)
     }
 
     for _, found_entity in pairs(found_entities) do
+        if not tools.isValid(found_entity) then return nil end
         elevator_end[ENTITY_MAP[found_entity.name]] = found_entity
     end
-
-    if not (tools.isValid(elevator_end.elevator) and tools.isValid(elevator_end.stop)) then return nil end
 
     -- if the elevator goes away, make this end go away as well
     script.register_on_object_destroyed(elevator_end.elevator)
@@ -78,16 +79,16 @@ end
 ---@param key ('ground'|'orbit')
 local function destroy_connector(elevator, key)
     local connector = elevator[key]
-    if connector then
-        if connector.connector then connector.connector.destroy() end
+    if not connector then return end
 
-        clear_elevator_id(elevator, key)
-        clear_elevator_id(elevator, 'se_' .. key)
+    if connector.connector then connector.connector.destroy() end
 
-        connector.connector = nil
-        connector.elevator = nil
-        connector.stop = nil
-    end
+    clear_elevator_id(elevator, key)
+    clear_elevator_id(elevator, 'se_' .. key)
+
+    connector.connector = nil
+    connector.elevator = nil
+    connector.stop = nil
 end
 
 ---@param elevator lse.Elevator
@@ -183,7 +184,6 @@ function Elevator:registerSpaceElevator(entity)
     local ground = main_is_orbit and other_end or main_end
     local orbit = other_is_orbit and other_end or main_end
 
-
     elevator = {
         ids = {
             se_ground = ground.elevator.unit_number,
@@ -204,7 +204,6 @@ function Elevator:registerSpaceElevator(entity)
         ground = ground,
         orbit = orbit,
     }
-
 
     local lse_storage = This:storage()
     for _, id in pairs(elevator.ids) do

@@ -34,8 +34,8 @@ local function on_space_elevator_changed_state(event)
 
     if not elevator then
         elevator = This.Elevator:registerSpaceElevator(event.primary)
+        if not elevator then return end
     end
-    if not elevator then return end
 
     This.Elevator:updateElevatorState(elevator, event.constructed, event.powered)
 end

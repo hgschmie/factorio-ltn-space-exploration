@@ -19,12 +19,11 @@ local Lse = {}
 ---@param delivery ltn.Delivery
 ---@param callback fun(delivery: ltn.Delivery, from_stop: LuaEntity, to_stop: LuaEntity)
 local function process_delivery(delivery, callback)
-    local lse_storage = This:storage()
-
     if not (delivery and delivery.surface_connections and next(delivery.surface_connections)) then return end
 
     if not tools.isValid(delivery.train) then return end
 
+    local lse_storage = This:storage()
     local from_stop = tools.isValid(lse_storage.known_stops[delivery.from_id])
     local to_stop = tools.isValid(lse_storage.known_stops[delivery.to_id])
 
@@ -57,14 +56,14 @@ local function get_elevator_stop_for_surface(surface_connection, current_surface
     local elevator = This.Elevator:findElevator(surface_connection.entity1.unit_number)
     if not elevator then return nil end
 
+    if not (elevator.state.connected and elevator.state.constructed and elevator.state.powered) then return nil end
+
     local ground_stop = tools.isValid(elevator.ground.stop) and elevator.ground.stop or nil
     local orbit_stop = tools.isValid(elevator.orbit.stop) and elevator.orbit.stop or nil
     if not (ground_stop and orbit_stop) then return nil end
 
     local entity = (ground_stop.surface_index == current_surface_index) and ground_stop or orbit_stop
     if entity.surface_index ~= current_surface_index then return nil end
-
-    if not (elevator.state.connected and elevator.state.constructed and elevator.state.powered) then return nil end
 
     return entity
 end
