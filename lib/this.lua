@@ -4,9 +4,9 @@
 
 ---@class lse.Mod
 ---@field other_mods table<string, string>
----@field Lse lse.Lse?
----@field Elevator lse.SpaceElevator?
----@field Gui lse.Gui?
+---@field Lse lse.Lse
+---@field Elevator lse.SpaceElevator
+---@field Gui lse.Gui
 local This = {
     other_mods = {
         LogisticTrainNetwork = 'ltn',

@@ -35,6 +35,7 @@ local function create_elevator_end(entity)
         name = REQUESTED_ENTITIES,
     }
 
+    ---@type lse.ElevatorEnd
     local elevator_end = {
         elevator = entity,
     }

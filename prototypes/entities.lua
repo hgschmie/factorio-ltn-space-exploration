@@ -1,3 +1,5 @@
+---@namespace data
+
 ------------------------------------------------------------------------
 -- entity definitions
 ------------------------------------------------------------------------
@@ -12,7 +14,7 @@ local util = require('util')
 -- surfaces. Theoretically this could be the two ends of the space elevator itself but then
 -- removing the ltn-space-exploration mod would retain the existing LTN connections indefinitely.
 
----@type data.SimpleEntityWithOwnerPrototype
+---@type SimpleEntityWithOwnerPrototype
 local entity = {
     -- PrototypeBase
     type = 'simple-entity-with-owner',
@@ -21,7 +23,7 @@ local entity = {
     hidden_in_factoriopedia = true,
 
     -- SimpleEntityWithOwnerPrototype
-    picture = util.empty_sprite(),
+    picture = util.empty_sprite() --[[@as Sprite ]],
 
     -- EntityWithHealthPrototype
     max_health = 1,

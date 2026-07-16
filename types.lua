@@ -133,7 +133,7 @@
 
 ---@class lse.ElevatorEnd
 ---@field elevator  LuaEntity
----@field stop      LuaEntity
+---@field stop      LuaEntity?
 ---@field connector LuaEntity?
 
 ---@class lse.Elevator

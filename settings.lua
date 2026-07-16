@@ -2,7 +2,7 @@
 -- settings phase
 ------------------------------------------------------------------------
 
-require('lib.init')
+This, Framework = require('lib.init')()
 
 local const = require('lib.constants')
 
@@ -29,8 +29,6 @@ data:extend {
         default_value = '[item=se-space-elevator] Cleared',
         order = 'b',
     } }
-
-------------------------------------------------------------------------
 
 ---@diagnostic disable-next-line: undefined-field
 Framework.post_settings_stage()
