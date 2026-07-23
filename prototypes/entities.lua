@@ -29,7 +29,7 @@ local entity = {
     max_health = 1,
 
     -- EntityPrototype
-    icons = { util.empty_icon() },
+    icons = { util.empty_icon() --[[@as IconData ]], },
     collision_box = { { -0.01, -0.01 }, { 0.01, 0.01 } },
     collision_mask = collision_mask_util.new_mask(),
     selection_box = { { -0.01, -0.01 }, { 0.01, 0.01 } },

@@ -1,16 +1,16 @@
 {
   "name": "ltn-space-exploration",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "title": "LTN - Space Exploration Integration",
   "description": "Integrates LTN with Space Exploration",
   "author": "hgschmie",
   "contact": "https://github.com/hgschmie/factorio-ltn-space-exploration/issues",
   "homepage": "https://github.com/hgschmie/factorio-ltn-space-exploration",
-  "factorio_version": "2.0",
+  "factorio_version": "2.1",
   "dependencies": [
-    "base >= 2.0.48",
+    "base >= 2.1.7",
     "LogisticTrainNetwork >= 2.7.1",
-    "space-exploration >= 0.7.0",
+    "space-exploration >= 0.7.59",
     "! se-ltn-glue"
   ],
   "package": {

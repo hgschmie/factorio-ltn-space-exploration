@@ -8,8 +8,8 @@
 ---@field Elevator lse.SpaceElevator
 ---@field Gui lse.Gui
 local This = {
-    other_mods = {
-        LogisticTrainNetwork = 'ltn',
+    remote_apis = {
+        ['logistic-train-network'] = 'ltn',
         ['space-exploration'] = 'se',
     },
 }

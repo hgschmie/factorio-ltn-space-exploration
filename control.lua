@@ -101,9 +101,9 @@ local function register_events()
 end
 
 local function register_apis()
-    Framework.remote_api.reset = remote_reset
-    Framework.remote_api.connect_elevator = remote_connect_elevator
-    Framework.remote_api.disconnect_elevator = remote_disconnect_elevator
+    Framework.ExportedApis.reset = remote_reset
+    Framework.ExportedApis.connect_elevator = remote_connect_elevator
+    Framework.ExportedApis.disconnect_elevator = remote_disconnect_elevator
 end
 
 --------------------------------------------------------------------------------
