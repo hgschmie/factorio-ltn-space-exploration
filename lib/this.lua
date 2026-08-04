@@ -6,6 +6,7 @@ local const = require('lib.constants')
 
 ---@class lse.Mod
 ---@field other_mods table<string, string>
+---@field settings ff2.ModSettings
 ---@field Lse lse.Lse
 ---@field Elevator lse.SpaceElevator
 ---@field Gui lse.Gui
@@ -14,6 +15,7 @@ local This = {
         LogisticTrainNetwork = 'ltn',
         ['space-exploration'] = 'se',
     },
+    settings = require('lib.settings'),
 }
 
 if (script) then
@@ -22,10 +24,8 @@ if (script) then
     This.Gui = require('scripts.gui')
 end
 
-----------------------------------------------------------------------------------------------------
-
 --------------------------------------------------------------------------------
--- Framework intializer
+-- Framework initializer
 --------------------------------------------------------------------------------
 
 ---@return FrameworkConfig config
@@ -65,7 +65,5 @@ end
 function This:storage()
     return assert(storage.lse_data)
 end
-
-Framework.settings:add_defaults(require('lib.settings'))
 
 return This

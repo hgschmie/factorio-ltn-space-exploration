@@ -4,7 +4,7 @@
 
 local const = require('lib.constants')
 
----@type table<FrameworkSettings.name, FrameworkSettingsGroup>
+---@type ff2.ModSettings
 local Settings = {
     runtime = {
         [const.settings_names.use_elevator_clearance] = {
