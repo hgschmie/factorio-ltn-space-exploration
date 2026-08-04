@@ -21,7 +21,7 @@ local function on_train_teleport_finished(event)
     This.Lse:endElevatorTravel(event.old_train_id_1, event.train)
 
     if event.stranded then
-        tools.printmsg(0, function()
+        Framework.logger.print(0, function()
             return { const:locale('train_stranded'), event.stranded.id, tools.gpsTextForEntity(event.teleporter) }
         end)
     end

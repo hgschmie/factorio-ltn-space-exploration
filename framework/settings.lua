@@ -117,7 +117,6 @@ function FrameworkSettings:get_settings(setting_type, player_index)
         end
     end
 
-    Framework.logger:debugf("Loaded '%s' settings: %s", setting_type, serpent.line(settings_group:get_values()))
     return values
 end
 
@@ -139,6 +138,8 @@ function FrameworkSettings:flush()
     settings_table.player:clear()
     settings_table.runtime:clear()
     settings_table.startup:clear()
+
+    self.DEBUG_LEVEL = nil
 end
 
 --- Access the startup settings.
