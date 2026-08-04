@@ -10,6 +10,7 @@
 
 local Constants = {
     prefix = 'hps__lse-',
+    log_prefix = 'LSE',
     name = 'ltn-space-exploration',
     root = '__ltn-space-exploration__',
 }

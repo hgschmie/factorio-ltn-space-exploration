@@ -33,6 +33,8 @@ function This.framework_init()
     return {
         -- prefix is the internal mod prefix
         prefix = const.prefix,
+        -- prefix for log messages
+        log_prefix = const.log_prefix,
         -- name is a human readable name
         name = const.name,
         -- The filesystem root.
