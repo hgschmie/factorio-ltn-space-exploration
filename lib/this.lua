@@ -2,6 +2,8 @@
 --- Initialize this mod's globals
 ----------------------------------------------------------------------------------------------------
 
+local const = require('lib.constants')
+
 ---@class lse.Mod
 ---@field other_mods table<string, string>
 ---@field Lse lse.Lse
@@ -21,6 +23,24 @@ if (script) then
 end
 
 ----------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+-- Framework intializer
+--------------------------------------------------------------------------------
+
+---@return FrameworkConfig config
+function This.framework_init()
+    return {
+        -- prefix is the internal mod prefix
+        prefix = const.prefix,
+        -- name is a human readable name
+        name = const.name,
+        -- The filesystem root.
+        root = const.root,
+        -- remote API
+        exported_api_name = const.lse_name,
+    }
+end
 
 ------------------------------------------------------------------------
 -- init setup
