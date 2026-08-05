@@ -14,7 +14,7 @@
     "! se-ltn-glue"
   ],
   "package": {
-    "git_publish_branch": "main",
+    "git_publish_branch": "2.0-maint",
     "readme": "README.md",
     "gallery": [
       ".portal/ltn-se-1.png"
