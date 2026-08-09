@@ -233,7 +233,7 @@ function Elevator:updateElevatorConnection(elevator)
     if (not can_connect(elevator)) or elevator.config.network_id == 0 then
         if not elevator.state.connected then return end
 
-        tools.printmsg(2, function()
+        Framework.logger.print(2, function()
             return { const:locale('elevator_disconnected'), tools.gpsTextForEntity(elevator.ground.connector) }
         end, tools.isValid(elevator.ground.connector) and elevator.ground.connector.force or nil)
 
@@ -247,7 +247,7 @@ function Elevator:updateElevatorConnection(elevator)
         elevator.state.network_id = elevator.config.network_id
         elevator.state.connected = true
 
-        tools.printmsg(2, function()
+        Framework.logger.print(2, function()
             local msg = elevator.config.network_id == -1 and const:locale('elevator_connected_all') or const:locale('elevator_connected')
             return { msg, tools.gpsTextForEntity(elevator.ground.connector), tools.networkList(elevator.config.network_id) }
         end, tools.isValid(elevator.ground.connector) and elevator.ground.connector.force or nil)

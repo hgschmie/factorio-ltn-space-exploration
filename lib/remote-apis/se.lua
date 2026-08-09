@@ -13,31 +13,31 @@ local tools = require('scripts.tools')
 
 ---@param event se.EventData.on_train_teleport_started
 local function on_train_teleport_started(event)
-   This.Lse:startElevatorTravel(event.old_train_id_1, event.train)
+    This.Lse:startElevatorTravel(event.old_train_id_1, event.train)
 end
 
 ---@param event se.EventData.on_train_teleport_finished
 local function on_train_teleport_finished(event)
-   This.Lse:endElevatorTravel(event.old_train_id_1, event.train)
+    This.Lse:endElevatorTravel(event.old_train_id_1, event.train)
 
-   if event.stranded then
-      tools.printmsg(0, function()
-         return { const:locale('train_stranded'), event.stranded.id, tools.gpsTextForEntity(event.teleporter) }
-      end)
-   end
+    if event.stranded then
+        Framework.logger.print(0, function()
+            return { const:locale('train_stranded'), event.stranded.id, tools.gpsTextForEntity(event.teleporter) }
+        end)
+    end
 end
 
 ---@param event se.EventData.on_space_elevator_changed_state
 local function on_space_elevator_changed_state(event)
-   if not tools.isValid(event.primary) then return end
-   local elevator = This.Elevator:findElevator(event.primary.unit_number)
+    if not tools.isValid(event.primary) then return end
+    local elevator = This.Elevator:findElevator(event.primary.unit_number)
 
-   if not elevator then
-      elevator = This.Elevator:registerSpaceElevator(event.primary)
-      if not elevator then return end
-   end
+    if not elevator then
+        elevator = This.Elevator:registerSpaceElevator(event.primary)
+        if not elevator then return end
+    end
 
-   This.Elevator:updateElevatorState(elevator, event.constructed, event.powered)
+    This.Elevator:updateElevatorState(elevator, event.constructed, event.powered)
 end
 
 local function se_init()
