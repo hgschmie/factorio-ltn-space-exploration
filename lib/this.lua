@@ -18,7 +18,7 @@ local This = {
     settings = require('lib.settings'),
 }
 
-if (script) then
+function This.boot()
     This.Lse = require('scripts.lse')
     This.Elevator = require('scripts.elevator')
     This.Gui = require('scripts.gui')
