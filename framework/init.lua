@@ -18,18 +18,18 @@ local Is = require('stdlib.utils.is')
 ---@field NAME string
 ---@field GAME_ID integer,
 ---@field RUN_ID integer,
----@field settings FrameworkSettings?
----@field logger FrameworkLogger?
----@field runtime FrameworkRuntime?
----@field gui_manager framework.gui_manager?
----@field Ghost ff2.ghost_manager?
----@field blueprint framework.blueprint.Manager?
----@field Tombstone ff2.TombstoneManager?
----@field translation_manager framework.translation.Manager?
+---@field settings FrameworkSettings
+---@field logger FrameworkLogger
+---@field runtime FrameworkRuntime
+---@field gui_manager framework.gui_manager
+---@field Ghost ff2.ghost_manager
+---@field blueprint framework.blueprint.Manager
+---@field Tombstone ff2.TombstoneManager
+---@field translation_manager framework.translation.Manager
 ---@field other_mods framework.OtherModsManager
----@field RemoteApis ff2.RemoteApisManager?
----@field ExportedApis table<string, function>?
----@field render FrameworkRender?
+---@field RemoteApis ff2.RemoteApisManager
+---@field ExportedApis table<string, function>
+---@field render FrameworkRender
 local FrameworkInit = {
     --- The non-localised prefix (textual ID) of this mod.
     -- Must be set as the earliest possible time, as virtually all other framework parts use this.
@@ -44,28 +44,6 @@ local FrameworkInit = {
     GAME_ID = -1,
 
     RUN_ID = -1,
-
-    settings = nil,
-
-    logger = nil,
-
-    runtime = nil,
-
-    gui_manager = nil,
-
-    ghost_manager = nil,
-
-    blueprint = nil,
-
-    translation_manager = nil,
-
-    Tombstone = nil,
-
-    ExportedApis = nil,
-
-    RemoteApis = nil,
-
-    render = nil,
 }
 
 --- called in runtime stage
