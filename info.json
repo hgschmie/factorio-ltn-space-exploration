@@ -9,7 +9,7 @@
   "factorio_version": "2.1",
   "dependencies": [
     "base >= 2.1.7",
-    "LogisticTrainNetwork >= 2.7.1",
+    "LogisticTrainNetwork >= 3.2.1",
     "space-exploration >= 0.7.59",
     "! se-ltn-glue"
   ],

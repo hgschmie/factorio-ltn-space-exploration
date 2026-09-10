@@ -34,7 +34,8 @@ local function process_delivery(delivery, callback)
     if not loco or (loco.surface == from_stop.surface and loco.surface == to_stop.surface) then return end
 
     Framework.logger.print(3, function()
-        return { const:locale('cross_surface_delivery'), tools.richTextForTrain(delivery.train), #delivery.surface_connections }
+        return { const:locale('cross_surface_delivery'), tools.richTextForTrain(delivery.train), #delivery
+        .surface_connections }
     end, loco.force)
 
     callback(delivery, from_stop, to_stop)
@@ -119,6 +120,18 @@ local function add_temp_stop(train, current_stop, current_schedule_index, curren
             station = Framework.settings:runtime_setting(const.settings_names.elevator_clearance_name),
             temporary = true,
             index = { schedule_index = current_schedule_index },
+            -- mark as LTN Managed
+            wait_conditions = {
+                {
+                    type = 'not_at_station',
+                    station = '[virtual-signal=ltn-depot] LTN',
+                },
+                {
+                    type = 'time',
+                    ticks = 0,
+                    compare_type = 'or',
+                },
+            },
         }
     end
 
@@ -126,6 +139,18 @@ local function add_temp_stop(train, current_stop, current_schedule_index, curren
         station = possible_stops[result.goal_index].backer_name,
         temporary = true,
         index = { schedule_index = current_schedule_index },
+        -- mark as LTN Managed
+        wait_conditions = {
+            {
+                type = 'not_at_station',
+                station = '[virtual-signal=ltn-depot] LTN',
+            },
+            {
+                type = 'time',
+                ticks = 0,
+                compare_type = 'or',
+            },
+        },
     }
 
     if schedule.current > current_schedule_index then
@@ -154,15 +179,19 @@ local function add_space_elevator_stops(delivery, provider_stop, requester_stop)
     local provider_surface_index = provider_stop.surface_index
     local requester_surface_index = requester_stop.surface_index
 
-    local provider_schedule_index, _, provider_stop_type = remote.call('logistic-train-network', 'get_next_logistic_stop', train)
+    local provider_schedule_index, _, provider_stop_type = remote.call('logistic-train-network', 'get_next_logistic_stop',
+        train)
     if provider_stop_type ~= 'provider' then
-        Framework.logger.log(1, 'add_space_elevator_stops', 'could not find provider stop for train %d', function() return train.id end)
+        Framework.logger.log(1, 'add_space_elevator_stops', 'could not find provider stop for train %d',
+            function() return train.id end)
         return
     end
 
-    local requester_schedule_index, _, requester_stop_type = remote.call('logistic-train-network', 'get_next_logistic_stop', train, provider_schedule_index + 1)
+    local requester_schedule_index, _, requester_stop_type = remote.call('logistic-train-network',
+        'get_next_logistic_stop', train, provider_schedule_index + 1)
     if requester_stop_type ~= 'requester' then
-        Framework.logger.log(1, 'add_space_elevator_stops', 'could not find requester stop for train %d', function() return train.id end)
+        Framework.logger.log(1, 'add_space_elevator_stops', 'could not find requester stop for train %d',
+            function() return train.id end)
         return
     end
 
@@ -174,7 +203,8 @@ local function add_space_elevator_stops(delivery, provider_stop, requester_stop)
         if surface_connections[key] then
             if not add_temp_stop(train, requester_stop, requester_schedule_index + 1, requester_surface_index, surface_connections[key]) then
                 Framework.logger.print(1, function()
-                    return ('Could not add a elevator stop to move from %s to %s'):format(tools.gpsTextForEntity(requester_stop), game.surfaces[train_surface_index].name)
+                    return ('Could not add a elevator stop to move from %s to %s'):format(
+                        tools.gpsTextForEntity(requester_stop), game.surfaces[train_surface_index].name)
                 end)
             end
         end
@@ -186,7 +216,8 @@ local function add_space_elevator_stops(delivery, provider_stop, requester_stop)
         if surface_connections[key] then
             if not add_temp_stop(train, provider_stop, provider_schedule_index + 1, provider_surface_index, surface_connections[key]) then
                 Framework.logger.print(1, function()
-                    return ('Could not add a elevator stop to move from %s to %s'):format(tools.gpsTextForEntity(provider_stop), tools.gpsTextForEntity(requester_stop))
+                    return ('Could not add a elevator stop to move from %s to %s'):format(
+                        tools.gpsTextForEntity(provider_stop), tools.gpsTextForEntity(requester_stop))
                 end)
             end
         end
@@ -198,7 +229,8 @@ local function add_space_elevator_stops(delivery, provider_stop, requester_stop)
         if surface_connections[key] then
             if not add_temp_stop(train, nil, provider_schedule_index, train_surface_index, surface_connections[key]) then
                 Framework.logger.print(1, function()
-                    return ('Could not add a elevator stop to move from %s to %s'):format(game.surfaces[train_surface_index].name, tools.gpsTextForEntity(provider_stop))
+                    return ('Could not add a elevator stop to move from %s to %s'):format(
+                        game.surfaces[train_surface_index].name, tools.gpsTextForEntity(provider_stop))
                 end)
             end
         end

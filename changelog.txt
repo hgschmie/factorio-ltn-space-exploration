@@ -2,10 +2,14 @@
 Version: 2.0.3
 Date: ????
   Changes:
+    - Mark temporary stops (elevator, clearance station) as LTN managed, so when disrupting a
+      delivery manually (send train back to depot), all temp stops get removed correctly
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.2
 Date: 2026-08-20
   Changes:
+    - Framework updates
+    - Turn off debugging (currently not in use)
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.1
 Date: 2026-08-08
