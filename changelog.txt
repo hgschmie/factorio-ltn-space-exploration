@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.3
-Date: ????
+Date: 2026-09-10
   Changes:
     - Mark temporary stops (elevator, clearance station) as LTN managed, so when disrupting a
       delivery manually (send train back to depot), all temp stops get removed correctly
