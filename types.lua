@@ -86,29 +86,35 @@
 --- SE Types
 ----------------------------------------------------------------------------------------------------
 
----@class se.EventData.on_train_teleport_started
+---@class se.EventData.on_train_teleport_started: EventData
 ---@field train             LuaTrain
 ---@field old_train_id_1    integer
 ---@field old_surface_index integer
 ---@field teleporter        LuaEntity
 
----@class se.EventData.on_train_teleport_finished
+---@class se.EventData.on_train_teleport_finished: EventData
 ---@field train             LuaTrain
 ---@field old_train_id_1    integer
 ---@field stranded          LuaTrain?
 ---@field old_surface_index integer
 ---@field teleporter        LuaEntity
 
----@class se.EventData.on_space_elevator_changed_state
+---@class se.EventData.on_space_elevator_changed_state: EventData
 ---@field primary     LuaEntity
 ---@field constructed boolean
 ---@field powered     boolean
+
+---@class se.ZoneTypeParams
+---@field surface_index uint32
 
 ---@class se.ZoneType
 ---@field type          string
 ---@field orbit_index   integer?
 ---@field parent_index  integer?
 ---@field surface_index integer
+
+--- @class se.ElevatorInfoParams
+--- @field unit_number uint64?
 
 ---@class se.ElevatorInfo
 ---@field main        LuaEntity
@@ -146,3 +152,28 @@
 ---@class lse.Storage
 ---@field known_stops LuaEntity[]
 ---@field elevators   lse.Elevator[]
+
+----------------------------------------------------------------------------------------------------
+--- Remote API
+----------------------------------------------------------------------------------------------------
+
+---@class (partial) LuaRemote.InterfaceMap
+---@field PickerDollies PickerDollies.RemoteInterface
+---@field logistic-train-network LTN.RemoteInterface
+---@field space-exploration SpaceExploration.RemoteInterface
+
+---@class PickerDollies.RemoteInterface
+---@field add_blacklist_name fun(name: string, value: boolean): boolean
+
+---@class LTN.RemoteInterface
+---@field on_dispatcher_updated fun(): defines.events
+---@field on_stops_updated fun(): defines.events
+---@field connect_surfaces fun(left: LuaEntity?, right: LuaEntity?, network_id: integer?)
+---@field disconnect_surfaces fun(left: LuaEntity?, right: LuaEntity?)
+---@field get_next_logistic_stop fun(train: LuaTrain?, schedule_index: integer?): integer?, integer?, ('provider'|'requester')?
+---@field reassign_delivery fun(old_train_id: integer, new_train: LuaTrain): boolean
+---@field get_or_create_next_temp_stop fun(train: LuaTrain, schedule_index: integer?): integer?
+
+---@class SpaceExploration.RemoteInterface
+---@field get_space_elevator_info fun(data: se.ElevatorInfoParams) : se.ElevatorInfo
+---@field get_zone_from_surface_index fun(data: se.ZoneTypeParams): se.ZoneType?

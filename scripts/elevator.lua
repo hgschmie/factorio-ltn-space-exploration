@@ -149,7 +149,6 @@ end
 function Elevator:registerSpaceElevator(entity)
     if not tools.isValid(entity) then return nil end
 
-    ---@type se.ElevatorInfo
     local elevator_info = remote.call('space-exploration', 'get_space_elevator_info', {
         unit_number = entity.unit_number,
     })
@@ -162,11 +161,9 @@ function Elevator:registerSpaceElevator(entity)
         return elevator
     end
 
-    ---@type se.ZoneType?
     local main_zone = remote.call('space-exploration', 'get_zone_from_surface_index', { surface_index = elevator_info.main.surface_index })
     if not main_zone then return nil end
 
-    ---@type se.ZoneType?
     local other_zone = remote.call('space-exploration', 'get_zone_from_surface_index', { surface_index = elevator_info.opposite.surface_index })
     if not other_zone then return nil end
 

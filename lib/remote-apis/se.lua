@@ -22,7 +22,7 @@ local function on_train_teleport_finished(event)
 
     if event.stranded then
         Framework.logger.print(0, function()
-            return { const:locale('train_stranded'), event.stranded.id, tools.gpsTextForEntity(event.teleporter) }
+            return { const:locale('train_stranded'), event.stranded.id, tools.gpsTextForEntity(event.teleporter) } --[[@as LocalisedString ]]
         end)
     end
 end
