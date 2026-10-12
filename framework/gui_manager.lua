@@ -119,7 +119,9 @@ end
 ---@return boolean handled True if an event handler was called, False otherwise.
 function FrameworkGuiManager:executeGuiHandler(handler_id, event, gui)
     -- find the event mapping for the GUI
-    local gui_definition = assert(self.known_gui_types[gui.type])
+    local gui_definition = self.known_gui_types[gui.type]
+    ---@cast gui_definition -?
+    ---@cast gui_definition.events -?
     local event_handler = gui_definition.events[handler_id]
     if not event_handler then return false end
     event_handler(event, gui)
